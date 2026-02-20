@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>จัดการงาน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=IBM+Plex+Sans+Thai:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #FFFFFF;
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      min-height: 100vh;
+    }
+    .app { max-width: 680px; margin: 0 auto; padding: 32px 16px 80px; }
+    .header { margin-bottom: 36px; }
+    .title { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: #111111; line-height: 1.1; }
+    .subtitle { color: #888888; font-size: 14px; margin-top: 6px; font-weight: 300; }
+
+    /* Focus Banner */
+    .focus-banner {
+      background: #111111; color: #FFFFFF; border-radius: 16px; padding: 20px 24px;
+      margin-bottom: 28px; position: relative; overflow: hidden;
+      animation: fadeSlide 0.4s ease;
+    }
+    .focus-banner::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 120px; height: 120px; background: rgba(24,119,242,0.2); border-radius: 50%;
+    }
+    .focus-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+    .focus-text { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 500; line-height: 1.3; }
+    .focus-priority { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 12px; padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,0.1); }
+    .focus-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px; }
+    .focus-close:hover { color: #FFFFFF; }
+    .focus-done-btn { margin-top: 14px; background: #1877F2; color: white; border: none; border-radius: 8px; padding: 8px 18px; font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 13px; cursor: pointer; transition: opacity 0.2s; }
+    .focus-done-btn:hover { opacity: 0.85; }
+
+    /* Input */
+    .input-card { background: #F8F8F8; border-radius: 16px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
+    .input-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .task-input { flex: 1; border: 2px solid #E5E5E5; border-radius: 10px; padding: 12px 16px; font-size: 15px; font-family: 'IBM Plex Sans Thai', sans-serif; color: #111111; background: #FFFFFF; outline: none; transition: border-color 0.2s; }
+    .task-input:focus { border-color: #1877F2; }
+    .task-input::placeholder { color: #BBBBBB; }
+    .add-btn { background: #111111; color: #FFFFFF; border: none; border-radius: 10px; padding: 12px 20px; font-size: 18px; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+    .add-btn:hover { background: #1877F2; transform: scale(1.05); }
+    .priority-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .p-chip { border: 1.5px solid transparent; border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; transition: all 0.15s; font-family: 'IBM Plex Sans Thai', sans-serif; display: flex; align-items: center; gap: 4px; }
+    .p-chip:hover { transform: translateY(-1px); }
+    .p-chip.active { border-color: currentColor; font-weight: 500; }
+
+    /* Stats */
+    .stats { display: flex; gap: 12px; margin-bottom: 24px; }
+    .stat-box { flex: 1; background: #F8F8F8; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); text-align: center; }
+    .stat-num { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: #111111; }
+    .stat-label { font-size: 11px; color: #999999; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Section */
+    .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #999999; margin-bottom: 12px; font-weight: 500; }
+
+    /* Task card */
+    .task-card {
+      background: #FFFFFF; border-radius: 14px; padding: 16px 18px;
+      margin-bottom: 10px; display: flex; align-items: flex-start; gap: 14px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.07);
+      transition: all 0.2s; cursor: grab; border: 2px solid transparent;
+      animation: fadeSlide 0.3s ease;
+    }
+    .task-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.1); transform: translateY(-1px); }
+    .task-card.drag-over { border-color: #1877F2; background: #EEF4FD; }
+    .task-card.dragging-active { opacity: 0.4; }
+    .task-card.done-card { opacity: 0.5; }
+    .task-card.focused { border-color: #111111; }
+
+    .check-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #DDDDDD; background: none; cursor: pointer; flex-shrink: 0; margin-top: 2px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+    .check-btn:hover { border-color: #2B7A6F; }
+    .check-btn.checked { background: #2B7A6F; border-color: #2B7A6F; color: white; }
+
+    .task-body { flex: 1; }
+    .task-text { font-size: 15px; color: #111111; line-height: 1.4; }
+    .task-text.done { text-decoration: line-through; color: #AAAAAA; }
+    .task-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .p-badge { font-size: 11px; border-radius: 20px; padding: 3px 9px; font-weight: 500; }
+
+    .task-actions { display: flex; gap: 6px; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; }
+    .task-card:hover .task-actions { opacity: 1; }
+    .action-btn { background: none; border: 1px solid #E5E5E5; border-radius: 8px; padding: 5px 8px; font-size: 12px; cursor: pointer; color: #888888; transition: all 0.2s; }
+    .action-btn:hover { background: #F5F5F5; color: #111111; }
+    .action-btn.delete:hover { background: #EEF4FD; color: #1877F2; border-color: #1877F2; }
+
+    .empty { text-align: center; padding: 40px; color: #BBBBBB; font-size: 14px; }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    .p-select { display: flex; gap: 4px; }
+    .ps-btn { border: none; background: #F5F5F5; border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+    .ps-btn:hover { background: #E5E5E5; }
+
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .done-section { margin-top: 32px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const PRIORITIES = {
+      urgent: { label: "ด่วนมาก", color: "#1877F2", bg: "#EEF4FD", order: 1, emoji: "🔥" },
+      high:   { label: "สำคัญ",    color: "#1877F2", bg: "#EEF4FD", order: 2, emoji: "⚡" },
+      medium: { label: "ปานกลาง", color: "#2B7A6F", bg: "#EDF7F5", order: 3, emoji: "📋" },
+      low:    { label: "ไม่เร่งด่วน", color: "#6B7280", bg: "#F3F4F6", order: 4, emoji: "🌿" },
+    };
+
+    let idCounter = Date.now();
+    const genId = () => String(++idCounter);
+
+    // ใช้ localStorage เก็บข้อมูล (ทำงานได้บนเว็บไซต์จริง)
+    const loadTasks = () => {
+      try { return JSON.parse(localStorage.getItem("tasks-v1")) || []; }
+      catch { return []; }
+    };
+    const saveTasks = (tasks) => {
+      try { localStorage.setItem("tasks-v1", JSON.stringify(tasks)); } catch {}
+    };
+
+    function App() {
+      const [tasks, setTasks] = useState(loadTasks);
+      const [input, setInput] = useState("");
+      const [priority, setPriority] = useState("high");
+      const [focusId, setFocusId] = useState(null);
+      const [dragging, setDragging] = useState(null);
+      const [dragOver, setDragOver] = useState(null);
+      const inputRef = useRef(null);
+
+      useEffect(() => { saveTasks(tasks); }, [tasks]);
+
+      const sorted = [...tasks].sort((a, b) => {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        return PRIORITIES[a.priority].order - PRIORITIES[b.priority].order;
+      });
+
+      const addTask = () => {
+        const text = input.trim();
+        if (!text) return;
+        setTasks(prev => [{ id: genId(), text, priority, done: false, created: Date.now() }, ...prev]);
+        setInput("");
+        inputRef.current?.focus();
+      };
+
+      const toggleDone = (id) => {
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+        if (focusId === id) setFocusId(null);
+      };
+
+      const deleteTask = (id) => {
+        setTasks(prev => prev.filter(t => t.id !== id));
+        if (focusId === id) setFocusId(null);
+      };
+
+      const changePriority = (id, p) => {
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, priority: p } : t));
+      };
+
+      const onDragStart = (e, id) => { setDragging(id); e.dataTransfer.effectAllowed = "move"; };
+      const onDragOver  = (e, id) => { e.preventDefault(); setDragOver(id); };
+      const onDrop = (e, targetId) => {
+        e.preventDefault();
+        if (!dragging || dragging === targetId) { setDragging(null); setDragOver(null); return; }
+        setTasks(prev => {
+          const arr = [...prev];
+          const fromIdx = arr.findIndex(t => t.id === dragging);
+          const toIdx   = arr.findIndex(t => t.id === targetId);
+          const [item]  = arr.splice(fromIdx, 1);
+          arr.splice(toIdx, 0, item);
+          return arr;
+        });
+        setDragging(null); setDragOver(null);
+      };
+
+      const focusTask = sorted.find(t => t.id === focusId && !t.done);
+      const pending   = tasks.filter(t => !t.done);
+      const done      = tasks.filter(t => t.done);
+
+      return (
+        <div className="app">
+          <div className="header">
+            <div className="title">จัดการงาน</div>
+            <div className="subtitle">โฟกัสทีละงาน เสร็จทีละเรื่อง ✦</div>
+          </div>
+
+          {/* Stats */}
+          <div className="stats">
+            <div className="stat-box">
+              <div className="stat-num">{pending.length}</div>
+              <div className="stat-label">งานค้าง</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-num" style={{ color: "#1877F2" }}>
+                {tasks.filter(t => !t.done && t.priority === "urgent").length}
+              </div>
+              <div className="stat-label">ด่วนมาก</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-num" style={{ color: "#2B7A6F" }}>{done.length}</div>
+              <div className="stat-label">เสร็จแล้ว</div>
+            </div>
+          </div>
+
+          {/* Focus Banner */}
+          {focusTask && (
+            <div className="focus-banner">
+              <button className="focus-close" onClick={() => setFocusId(null)}>✕</button>
+              <div className="focus-label">⚡ โฟกัสงานนี้ก่อนเลย</div>
+              <div className="focus-text">{focusTask.text}</div>
+              <div>
+                <span className="focus-priority">
+                  {PRIORITIES[focusTask.priority].emoji} {PRIORITIES[focusTask.priority].label}
+                </span>
+              </div>
+              <button className="focus-done-btn" onClick={() => { toggleDone(focusTask.id); setFocusId(null); }}>
+                ✓ ทำเสร็จแล้ว!
+              </button>
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="input-card">
+            <div className="input-row">
+              <input
+                ref={inputRef}
+                className="task-input"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addTask()}
+                placeholder="เพิ่มงานที่ต้องทำ..."
+              />
+              <button className="add-btn" onClick={addTask}>+</button>
+            </div>
+            <div className="priority-row">
+              {Object.entries(PRIORITIES).map(([key, p]) => (
+                <button
+                  key={key}
+                  className={`p-chip${priority === key ? " active" : ""}`}
+                  style={{ background: priority === key ? p.bg : "#F5F5F5", color: p.color }}
+                  onClick={() => setPriority(key)}
+                >
+                  {p.emoji} {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Task List */}
+          <div className="section-label">งานที่ต้องทำ ({pending.length})</div>
+
+          {pending.length === 0 ? (
+            <div className="empty">
+              <div className="empty-icon">🎉</div>
+              ไม่มีงานค้าง ยอดเยี่ยมมาก!
+            </div>
+          ) : (
+            sorted.filter(t => !t.done).map(task => {
+              const p = PRIORITIES[task.priority];
+              return (
+                <div
+                  key={task.id}
+                  className={`task-card${dragging === task.id ? " dragging-active" : ""}${dragOver === task.id ? " drag-over" : ""}${focusId === task.id ? " focused" : ""}`}
+                  draggable
+                  onDragStart={e => onDragStart(e, task.id)}
+                  onDragOver={e => onDragOver(e, task.id)}
+                  onDrop={e => onDrop(e, task.id)}
+                  onDragEnd={() => { setDragging(null); setDragOver(null); }}
+                >
+                  <button className={`check-btn${task.done ? " checked" : ""}`} onClick={() => toggleDone(task.id)}>
+                    {task.done ? "✓" : ""}
+                  </button>
+                  <div className="task-body">
+                    <div className={`task-text${task.done ? " done" : ""}`}>{task.text}</div>
+                    <div className="task-meta">
+                      <span className="p-badge" style={{ background: p.bg, color: p.color }}>
+                        {p.emoji} {p.label}
+                      </span>
+                      <div className="p-select">
+                        {Object.entries(PRIORITIES).map(([key, pp]) => (
+                          task.priority !== key && (
+                            <button key={key} className="ps-btn" style={{ color: pp.color }} onClick={() => changePriority(task.id, key)} title={pp.label}>
+                              {pp.emoji}
+                            </button>
+                          )
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="task-actions">
+                    <button className="action-btn" onClick={() => setFocusId(focusId === task.id ? null : task.id)} title="โฟกัสงานนี้">
+                      {focusId === task.id ? "✦" : "🎯"}
+                    </button>
+                    <button className="action-btn delete" onClick={() => deleteTask(task.id)}>✕</button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {/* Done Section */}
+          {done.length > 0 && (
+            <div className="done-section">
+              <div className="section-label">เสร็จแล้ว ({done.length}) ✓</div>
+              {sorted.filter(t => t.done).map(task => (
+                <div key={task.id} className="task-card done-card">
+                  <button className="check-btn checked" onClick={() => toggleDone(task.id)}>✓</button>
+                  <div className="task-body">
+                    <div className="task-text done">{task.text}</div>
+                  </div>
+                  <div className="task-actions">
+                    <button className="action-btn delete" onClick={() => deleteTask(task.id)}>✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
